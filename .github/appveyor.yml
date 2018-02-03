@@ -9,17 +9,17 @@ cache:
   - externals -> PCbuild\*
 before_build:
   - ps: |+
-    if ($env:APPVEYOR_RE_BUILD) {
-      # If we were explicitly told to rebuild, do a full build
-    } elseif (!$env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) {
-      # It's not a pull request, do a full build
-    } else {
-      $mergebase = git merge-base $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT $env:APPVEYOR_REPO_BRANCH
-      If (git diff --name-only $mergebase | grep -qvE '(\.rst$)|(^Doc)|(^Misc)') {
-        echo 'Only docs were updated, stopping build process.'
-        Exit-AppveyorBuild
+      if ($env:APPVEYOR_RE_BUILD) {
+        # If we were explicitly told to rebuild, do a full build
+      } elseif (!$env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) {
+        # It's not a pull request, do a full build
+      } else {
+        $mergebase = git merge-base $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT $env:APPVEYOR_REPO_BRANCH
+        If (git diff --name-only $mergebase | grep -qvE '(\.rst$)|(^Doc)|(^Misc)') {
+          echo 'Only docs were updated, stopping build process.'
+          Exit-AppveyorBuild
+        }
       }
-    }
 
 
 build_script:

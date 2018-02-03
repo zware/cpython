@@ -11,12 +11,13 @@ before_build:
   # Do we have grep?
   - cmd: where grep
   # Can we exit early at all?
-  - cmd: exit 0
+  - cmd: set EXIT_EARLY=1
 build_script:
-- cmd: PCbuild\build.bat -e
-- cmd: PCbuild\win32\python.exe -m test.pythoninfo
+  - cmd: if "%EXIT_EARLY%" EQU "1" exit 0
+  - cmd: PCbuild\build.bat -e
+  - cmd: PCbuild\win32\python.exe -m test.pythoninfo
 test_script:
-- cmd: PCbuild\rt.bat -q -uall -u-cpu -rwW --slowest --timeout=1200 --fail-env-changed -j0
+  - cmd: PCbuild\rt.bat -q -uall -u-cpu -rwW --slowest --timeout=1200 --fail-env-changed -j0
 environment:
   HOST_PYTHON: C:\Python36\python.exe
 image:

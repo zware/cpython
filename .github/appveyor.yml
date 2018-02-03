@@ -8,12 +8,10 @@ branches:
 cache:
   - externals -> PCbuild\*
 before_build:
-  # Do we have grep?
-  - cmd: where grep
+  - cmd: git diff --name-only
   # Can we exit early at all?
-  - cmd: set EXIT_EARLY=1
+  - cmd: appveyor exit
 build_script:
-  - cmd: if "%EXIT_EARLY%" EQU "1" echo hit
   - cmd: PCbuild\build.bat -e
   - cmd: PCbuild\win32\python.exe -m test.pythoninfo
 test_script:

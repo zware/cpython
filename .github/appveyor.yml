@@ -13,7 +13,7 @@ before_build:
   # Can we exit early at all?
   - cmd: set EXIT_EARLY=1
 build_script:
-  - cmd: if "%EXIT_EARLY%" EQU "1" exit 0
+  - cmd: if "%EXIT_EARLY%" EQU "1" echo hit
   - cmd: PCbuild\build.bat -e
   - cmd: PCbuild\win32\python.exe -m test.pythoninfo
 test_script:

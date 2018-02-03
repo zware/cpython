@@ -7,6 +7,11 @@ branches:
     - buildbot-custom
 cache:
   - externals -> PCbuild\*
+before_build:
+  # Do we have grep?
+  - cmd: where grep
+  # Can we exit early at all?
+  - cmd: exit 0
 build_script:
 - cmd: PCbuild\build.bat -e
 - cmd: PCbuild\win32\python.exe -m test.pythoninfo

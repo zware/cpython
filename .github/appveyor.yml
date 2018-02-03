@@ -7,11 +7,26 @@ branches:
     - buildbot-custom
 cache:
   - externals -> PCbuild\*
+before_build:
+  - ps: |+
+      if ($env:APPVEYOR_RE_BUILD) {
+        # If we were explicitly told to rebuild, do a full build
+      } elseif (!$env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) {
+        # It's not a pull request, do a full build
+      } else {
+        $mergebase = git merge-base $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT $env:APPVEYOR_REPO_BRANCH
+        If (git diff --name-only $mergebase | grep -qvE '(\.rst$)|(^Doc)|(^Misc)') {
+          echo 'Only docs were updated, stopping build process.'
+          Exit-AppveyorBuild
+        }
+      }
+
+
 build_script:
-- cmd: PCbuild\build.bat -e
-- cmd: PCbuild\win32\python.exe -m test.pythoninfo
+  - cmd: PCbuild\build.bat -e
+  - cmd: PCbuild\win32\python.exe -m test.pythoninfo
 test_script:
-- cmd: PCbuild\rt.bat -q -uall -u-cpu -rwW --slowest --timeout=1200 --fail-env-changed -j0
+  - cmd: PCbuild\rt.bat -q -uall -u-cpu -rwW --slowest --timeout=1200 --fail-env-changed -j0
 environment:
   HOST_PYTHON: C:\Python36\python.exe
 image:

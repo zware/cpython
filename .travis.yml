@@ -26,6 +26,7 @@ branches:
   only:
     - master
     - /^\d\.\d$/
+    - buildbot-custom
 
 matrix:
   fast_finish: true
@@ -57,15 +58,6 @@ matrix:
       env: OPTIONAL=true
       before_script:
         - |
-            if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.rst$)|(^Doc)|(^Misc)'
-            then
-              echo "Only docs were updated, stopping build process."
-              exit
-            fi
-            python3 Tools/ssl/multissltests.py  --steps=library \
-                --base-directory ${HOME}/multissl \
-                --openssl ${OPENSSL} >/dev/null
-            openssl version
             ./configure
             make -s -j4
             # Need a venv that can parse covered code.
@@ -80,29 +72,31 @@ matrix:
         - source ./venv/bin/activate
         - bash <(curl -s https://codecov.io/bash)
 
-# Travis provides only 2 cores, so don't overdo the parallelism and waste memory.
-before_script:
+
+before_install:
   - |
       set -e
-      if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-        files_changed=$(git diff --name-only $TRAVIS_COMMIT_RANGE)
-      else
-        # Pull requests are slightly complicated because merging the PR commit without
-        # rebasing causes it to retain its old commit date. Meaning in history if any
-        # commits have been made on master that post-date it, they will be accidentally
-        # included in the diff if we use the TRAVIS_COMMIT_RANGE variable.
-        files_changed=$(git diff --name-only HEAD $(git merge-base HEAD $TRAVIS_BRANCH))
-      fi
-
-      # Prints changed files in this commit to help debug doc-only build issues.
-      echo "Files changed: "
-      echo $files_changed
-
-      if ! echo "$files_changed" | grep -qvE '(\.rst$)|(^Doc)|(^Misc)'
+      if [ "${TESTING}" != "docs" ]
       then
-        echo "Only docs were updated, stopping build process."
-        exit
+        if [ "$TRAVIS_PULL_REQUEST" = "false" ]
+        then
+          echo "Not a PR, doing full build."
+        else
+          git fetch -q origin +refs/heads/$TRAVIS_BRANCH
+          changes=$(git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD))
+          echo "Files changed:"
+          echo "$changes"
+          if ! echo "$changes" | grep -qvE '(\.rst$)|(^Doc)|(^Misc)'
+          then
+            echo "Only docs were updated, stopping build process."
+            exit
+          fi
+        fi
       fi
+
+install:
+  - |
+      set -e
       if [ "${TESTING}" != "docs" ]; then
         # clang complains about unused-parameter a lot, redirect stderr
         python3 Tools/ssl/multissltests.py --steps=library \
@@ -110,6 +104,11 @@ before_script:
             --openssl ${OPENSSL} >/dev/null 2>&1
       fi
       openssl version
+
+# Travis provides only 2 cores, so don't overdo the parallelism and waste memory.
+before_script:
+  - |
+      set -e
       ./configure --with-pydebug
       make -j4 regen-all
       changes=`git status --porcelain`

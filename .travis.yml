@@ -75,6 +75,7 @@ matrix:
 before_install:
   - set -e
   - |
+      # Check for doc changes
       if [ "${TESTING}" != "docs" ]
       then
         if [ "$TRAVIS_PULL_REQUEST" = "false" ]
@@ -95,7 +96,9 @@ before_install:
 
 install:
   - |
-      if [ "${TESTING}" != "docs" ]; then
+      # Install OpenSSL as necessary
+      if [ "${TESTING}" != "docs" ]
+      then
         # clang complains about unused-parameter a lot, redirect stderr
         python3 Tools/ssl/multissltests.py --steps=library \
             --base-directory ${HOME}/multissl \

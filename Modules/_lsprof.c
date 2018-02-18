@@ -4,6 +4,8 @@
 
 /*** Selection of a high-precision timer ***/
 
+/* Bogus change to test Travis config */
+
 #ifdef MS_WINDOWS
 
 #include <windows.h>

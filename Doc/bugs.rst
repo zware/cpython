@@ -4,6 +4,8 @@
 Dealing with Bugs
 *****************
 
+This is a bogus commit to test my Travis modifications.
+
 Python is a mature programming language which has established a reputation for
 stability.  In order to maintain this reputation, the developers would like to
 know of any deficiencies you find in Python.

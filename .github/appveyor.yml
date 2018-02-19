@@ -1,10 +1,12 @@
 version: 3.7build{build}
-clone_depth: 5
+clone_script:
+  - cmd: git clone --depth=50 --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
 branches:
   only:
     - master
     - /\d\.\d/
     - buildbot-custom
+    - appveyor-test
 cache:
   - externals -> PCbuild\*
 before_build:

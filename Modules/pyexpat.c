@@ -6,8 +6,6 @@
 
 #include "pyexpat.h"
 
-/* This is a bogus change */
-
 /* Do not emit Clinic output to a file as that wreaks havoc with conditionally
    included methods. */
 /*[clinic input]

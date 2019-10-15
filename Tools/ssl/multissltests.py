@@ -116,6 +116,11 @@ parser.add_argument(
     help="Disable network tests."
 )
 parser.add_argument(
+    '-F', '--run-until-failure',
+    action='store_true',
+    help='Run tests until they fail or they are interrupted',
+)
+parser.add_argument(
     '--steps',
     choices=['library', 'modules', 'tests'],
     default='tests',
@@ -343,7 +348,7 @@ class AbstractBuilder(object):
         if self.version not in version:
             raise ValueError(version)
 
-    def run_python_tests(self, tests, network=True):
+    def run_python_tests(self, tests, network=True, run_until_failure=False):
         if not tests:
             cmd = [sys.executable, 'Lib/test/ssltests.py', '-j0']
         elif sys.version_info < (3, 3):
@@ -352,6 +357,8 @@ class AbstractBuilder(object):
             cmd = [sys.executable, '-m', 'test', '-j0']
         if network:
             cmd.extend(['-u', 'network', '-u', 'urlfetch'])
+        if run_until_failure:
+            cmd.append('-F')
         cmd.extend(['-w', '-r'])
         cmd.extend(tests)
         self._subprocess_call(cmd, stdout=None)
@@ -443,6 +450,7 @@ def main():
                     build.run_python_tests(
                         tests=args.tests,
                         network=args.network,
+                        run_until_failure=args.run_until_failure,
                     )
             except Exception as e:
                 log.exception("%s failed", build)

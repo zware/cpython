@@ -12,10 +12,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Modules\expat\xmlrole.h">
+    <ClInclude Include="$(expatDir)\lib\xmlrole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Modules\expat\xmltok.h">
+    <ClInclude Include="$(expatDir)\lib\xmltok.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -23,13 +23,13 @@
     <ClCompile Include="..\Modules\pyexpat.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmlparse.c">
+    <ClCompile Include="$(expatDir)\lib\xmlparse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmlrole.c">
+    <ClCompile Include="$(expatDir)\lib\xmlrole.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmltok.c">
+    <ClCompile Include="$(expatDir)\lib\xmltok.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

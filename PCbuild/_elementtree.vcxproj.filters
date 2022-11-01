@@ -18,49 +18,46 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Modules\expat\ascii.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\asciitab.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\expat.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
     <ClInclude Include="..\Modules\expat\expat_config.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\expat_external.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\iasciitab.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\internal.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\latin1tab.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\macconfig.h">
-      <Filter>Header Files\expat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Modules\expat\nametab.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
     <ClInclude Include="..\Modules\expat\pyexpatns.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
-    <ClInclude Include="..\Modules\expat\utf8tab.h">
+    <ClInclude Include="$(expatDir)\lib\ascii.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
-    <ClInclude Include="..\Modules\expat\winconfig.h">
+    <ClInclude Include="$(expatDir)\lib\asciitab.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
-    <ClInclude Include="..\Modules\expat\xmlrole.h">
+    <ClInclude Include="$(expatDir)\lib\expat.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
-    <ClInclude Include="..\Modules\expat\xmltok.h">
+    <ClInclude Include="$(expatDir)\lib\expat_external.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\iasciitab.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\internal.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\latin1tab.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\nametab.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\utf8tab.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\winconfig.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\xmlrole.h">
+      <Filter>Header Files\expat</Filter>
+    </ClInclude>
+    <ClInclude Include="$(expatDir)\lib\xmltok.h">
       <Filter>Header Files\expat</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,13 +65,13 @@
     <ClCompile Include="..\Modules\_elementtree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmlparse.c">
+    <ClCompile Include="$(expatDir)\lib\xmlparse.c">
       <Filter>Source Files\expat</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmlrole.c">
+    <ClCompile Include="$(expatDir)\lib\xmlrole.c">
       <Filter>Source Files\expat</Filter>
     </ClCompile>
-    <ClCompile Include="..\Modules\expat\xmltok.c">
+    <ClCompile Include="$(expatDir)\lib\xmltok.c">
       <Filter>Source Files\expat</Filter>
     </ClCompile>
   </ItemGroup>

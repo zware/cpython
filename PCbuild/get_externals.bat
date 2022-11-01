@@ -52,6 +52,7 @@ echo.Fetching external libraries...
 
 set libraries=
 set libraries=%libraries%                                       bzip2-1.0.8
+set libraries=%libraries%                                       expat
 if NOT "%IncludeLibffiSrc%"=="false" set libraries=%libraries%  libffi-3.4.3
 if NOT "%IncludeSSLSrc%"=="false" set libraries=%libraries%     openssl-1.1.1q
 set libraries=%libraries%                                       sqlite-3.39.4.0

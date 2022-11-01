@@ -93,32 +93,31 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\Modules\expat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(expatDir)\lib;$(PySourcePath)Modules\expat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Modules\expat\ascii.h" />
-    <ClInclude Include="..\Modules\expat\asciitab.h" />
-    <ClInclude Include="..\Modules\expat\expat.h" />
     <ClInclude Include="..\Modules\expat\expat_config.h" />
-    <ClInclude Include="..\Modules\expat\expat_external.h" />
-    <ClInclude Include="..\Modules\expat\iasciitab.h" />
-    <ClInclude Include="..\Modules\expat\internal.h" />
-    <ClInclude Include="..\Modules\expat\latin1tab.h" />
-    <ClInclude Include="..\Modules\expat\macconfig.h" />
-    <ClInclude Include="..\Modules\expat\nametab.h" />
     <ClInclude Include="..\Modules\expat\pyexpatns.h" />
-    <ClInclude Include="..\Modules\expat\utf8tab.h" />
-    <ClInclude Include="..\Modules\expat\winconfig.h" />
-    <ClInclude Include="..\Modules\expat\xmlrole.h" />
-    <ClInclude Include="..\Modules\expat\xmltok.h" />
+    <ClInclude Include="$(expatDir)\lib\ascii.h" />
+    <ClInclude Include="$(expatDir)\lib\asciitab.h" />
+    <ClInclude Include="$(expatDir)\lib\expat.h" />
+    <ClInclude Include="$(expatDir)\lib\expat_external.h" />
+    <ClInclude Include="$(expatDir)\lib\iasciitab.h" />
+    <ClInclude Include="$(expatDir)\lib\internal.h" />
+    <ClInclude Include="$(expatDir)\lib\latin1tab.h" />
+    <ClInclude Include="$(expatDir)\lib\nametab.h" />
+    <ClInclude Include="$(expatDir)\lib\utf8tab.h" />
+    <ClInclude Include="$(expatDir)\lib\winconfig.h" />
+    <ClInclude Include="$(expatDir)\lib\xmlrole.h" />
+    <ClInclude Include="$(expatDir)\lib\xmltok.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Modules\_elementtree.c" />
-    <ClCompile Include="..\Modules\expat\xmlparse.c" />
-    <ClCompile Include="..\Modules\expat\xmlrole.c" />
-    <ClCompile Include="..\Modules\expat\xmltok.c" />
+    <ClCompile Include="$(expatDir)\lib\xmlparse.c" />
+    <ClCompile Include="$(expatDir)\lib\xmlrole.c" />
+    <ClCompile Include="$(expatDir)\lib\xmltok.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\PC\python_nt.rc" />

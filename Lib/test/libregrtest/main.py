@@ -93,9 +93,11 @@ class Regrtest:
 
         # Workers
         self.single_process: bool = ns.single_process
+        self.cpu_target = (int(ns.use_mp[:-1]) / 100
+                           if isinstance(ns.use_mp, str) else None)
         if self.single_process or ns.use_mp is None:
             num_workers = 0   # run sequentially in a single process
-        elif ns.use_mp <= 0:
+        elif isinstance(ns.use_mp, str) or ns.use_mp <= 0:
             num_workers = -1  # run in parallel, use the number of CPUs
         else:
             num_workers = ns.use_mp  # run in parallel
@@ -459,7 +461,8 @@ class Regrtest:
 
     def _run_tests_mp(self, runtests: RunTests, num_workers: int) -> None:
         from .run_workers import RunWorkers
-        RunWorkers(num_workers, runtests, self.logger, self.results).run()
+        RunWorkers(num_workers, runtests, self.logger, self.results,
+                   cpu_target=self.cpu_target).run()
 
     def finalize_tests(self, coverage: trace.CoverageResults | None) -> None:
         if self.next_single_filename:
@@ -539,6 +542,9 @@ class Regrtest:
             # Use all CPUs + 2 extra worker processes for tests
             # that like to sleep
             self.num_workers = (os.process_cpu_count() or 1) + 2
+            if self.cpu_target is not None:
+                # Allow more sleeping or I/O-bound tests in adaptive mode.
+                self.num_workers *= 2
 
         # For a partial run, we do not need to clutter the output.
         if (self.want_header

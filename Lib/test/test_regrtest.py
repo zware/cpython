@@ -49,6 +49,7 @@ LOG_PREFIX = (
     r'[0-9]+:[0-9]+:[0-9]+ '
     r'(?:load avg: [0-9]+\.[0-9]{2} )?'
     r'(?:mem: [0-9]+\.[0-9] (?:MiB|GiB) )?'
+    r'(?:active workers: [0-9]+ )?'
 )
 RESULT_REGEX = (
     'passed',
@@ -379,6 +380,45 @@ class ParseArgsTestCase(unittest.TestCase):
                 self.assertEqual(ns.use_mp, 2)
                 self.checkError([opt], 'expected one argument')
                 self.checkError([opt, 'foo'], 'invalid int value')
+
+    def test_percentage_jobs(self):
+        with unittest.mock.patch('test.libregrtest.cpu_load.CPUTimeSampler'):
+            for args in (['-j90%'], ['--multiprocess=90%'], ['-j', '90%']):
+                with self.subTest(args=args):
+                    ns = self.parse_args(args)
+                    self.assertEqual(ns.use_mp, '90%')
+                    regrtest = main.Regrtest(ns)
+                    self.assertEqual(regrtest.cpu_target, 0.9)
+                    self.assertEqual(regrtest.num_workers, -1)
+            for value in ('1%', '100%'):
+                self.assertEqual(self.parse_args(['-j', value]).use_mp, value)
+        for value in ('0%', '101%', '-1%', '1.5%', 'nan%', '%'):
+            with self.subTest(value=value):
+                self.checkError([f'-j{value}'], 'expected a percentage')
+
+    def test_percentage_jobs_unavailable(self):
+        with unittest.mock.patch('test.libregrtest.cpu_load.CPUTimeSampler',
+                                 side_effect=OSError('no counters')):
+            self.checkError(['-j90%'], 'percentage jobs unavailable: no counters')
+            ns = self.parse_args(['-j90%', '--single-process'])
+            self.assertIsNone(ns.use_mp)
+
+    def test_percentage_jobs_worker_ceiling(self):
+        class StopRun(Exception):
+            pass
+
+        for cpu_count in (1, 16, None):
+            automatic = (cpu_count or 1) + 2
+            for option, expected in (('-j90%', 2 * automatic),
+                                     ('-j0', automatic), ('-j4', 4)):
+                with self.subTest(cpu_count=cpu_count, option=option):
+                    with unittest.mock.patch('test.libregrtest.cpu_load.CPUTimeSampler'):
+                        regrtest = self.create_regrtest([option, '--header'])
+                    with (unittest.mock.patch('os.process_cpu_count', return_value=cpu_count),
+                          unittest.mock.patch.object(main, 'display_header', side_effect=StopRun)):
+                        with self.assertRaises(StopRun):
+                            regrtest._run_tests((), [])
+                    self.assertEqual(regrtest.num_workers, expected)
 
     def test_coverage_sequential(self):
         for opt in '-T', '--coverage':
@@ -1064,6 +1104,19 @@ class ArgsTestCase(BaseTestCase):
         output = self.run_tests(*tests)
         self.check_executed_tests(output, tests,
                                   stats=3 * len(tests))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'requires Linux CPU counters')
+    def test_percentage_jobs(self):
+        from test.libregrtest.cpu_load import CPUTimeSampler
+        try:
+            CPUTimeSampler()
+        except (OSError, ValueError) as exc:
+            self.skipTest(str(exc))
+        tests = [self.create_test(f'cpu{i}') for i in range(3)]
+        output = self.run_tests('-j90%', *tests)
+        self.check_executed_tests(output, tests, stats=len(tests), parallel=True)
+        self.assertIn('CPU target: 90%, adaptive workers', output)
+        self.assertRegex(output, r'active workers: \d+ \[\s*\d+/3\]')
 
     def test_skip(self):
         code = textwrap.dedent("""

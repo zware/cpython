@@ -6,6 +6,19 @@ from test.support import os_helper, Py_DEBUG
 from .utils import ALL_RESOURCES, RESOURCE_NAMES, TestFilter
 
 
+def worker_count(value):
+    if value.endswith('%'):
+        percentage = value[:-1]
+        if (not percentage.isascii() or not percentage.isdecimal()
+                or not 1 <= int(percentage) <= 100):
+            raise argparse.ArgumentTypeError('expected a percentage from 1% to 100%')
+        return f'{int(percentage)}%'
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'invalid int value: {value!r}') from None
+
+
 USAGE = """\
 python -m test [options] [test_name1 [test_name2 ...]]
 python path/to/Lib/test/regrtest.py [options] [test_name1 [test_name2 ...]]
@@ -26,6 +39,15 @@ command line:
 
 EPILOG = """\
 Additional option details:
+
+`-jN%` adjusts concurrency to target N percent total CPU utilization on Linux,
+including other workloads on CPUs in the runner's affinity mask. It requires
+readable /proc/stat CPU counters. CPU quotas are not accounted for. Concurrency
+ranges from one worker to twice the automatic `-j0` worker count
+(2 * (usable CPU count + 2)), bounded by the number of tests.
+Running tests are never suspended: this is an approximate target,
+not a hard limit or a guarantee of reaching the target. At least one worker
+is allowed even when external load exceeds the target.
 
 `-r` randomizes test execution order. You can use `--randseed=int` to provide an
 int seed value for the randomizer. The `randseed` value will be used
@@ -174,7 +196,7 @@ class Namespace(argparse.Namespace):
         self.verbose3 = False
         self.print_slow = False
         self.random_seed = None
-        self.use_mp = None
+        self.use_mp: int | str | None = None
         self.parallel_threads = None
         self.forever = False
         self.header = False
@@ -333,8 +355,10 @@ def _create_parser():
                        help='search for reference leaks (needs debug build, '
                             'very slow).' + more_details)
     group.add_argument('-j', '--multiprocess', metavar='PROCESSES',
-                       dest='use_mp', type=int,
-                       help='run `PROCESSES` processes at once')
+                       dest='use_mp', type=worker_count,
+                       help='run `PROCESSES` processes at once, or use a '
+                            'percentage CPU utilization target (Linux only).'
+                            + more_details)
     group.add_argument('--single-process', action='store_true',
                        dest='single_process',
                        help='always run all tests sequentially in '
@@ -497,6 +521,13 @@ def _parse_args(args, **kwargs):
     # --singleprocess overrides -jN option
     if ns.single_process:
         ns.use_mp = None
+
+    if isinstance(ns.use_mp, str):
+        from .cpu_load import CPUTimeSampler
+        try:
+            CPUTimeSampler()
+        except (OSError, ValueError) as exc:
+            parser.error(f'percentage jobs unavailable: {exc}')
 
     if ns.single_process_per_case:
         if ns.rerun:

@@ -110,6 +110,7 @@ class WorkerThread(threading.Thread):
         self.worker_id = worker_id
         self.runtests = runner.runtests
         self.pending = runner.pending
+        self.cpu_gate = runner.cpu_gate
         self.output = runner.output
         self.timeout = runner.worker_timeout
         self.log = runner.log
@@ -414,6 +415,8 @@ class WorkerThread(threading.Thread):
                 for test_name in case_ids:
                     if self._stopped:
                         break
+                    if self.cpu_gate is not None and not self.cpu_gate.acquire():
+                        raise ExitThread
                     self.start_time = time.monotonic()
                     self.test_name = test_name
                     try:
@@ -424,6 +427,8 @@ class WorkerThread(threading.Thread):
                         mp_result = exc.mp_result
                     finally:
                         self.test_name = _NOT_RUNNING
+                        if self.cpu_gate is not None:
+                            self.cpu_gate.release()
                     mp_result.result.duration = time.monotonic() - self.start_time
                     if single_process_per_case:
                         # Report the test case, not the test module
@@ -499,7 +504,8 @@ def get_running(workers: list[WorkerThread]) -> str | None:
 
 class RunWorkers:
     def __init__(self, num_workers: int, runtests: RunTests,
-                 logger: Logger, results: TestResults) -> None:
+                 logger: Logger, results: TestResults, *,
+                 cpu_target: float | None = None) -> None:
         self.num_workers = num_workers
         self.runtests = runtests
         self.logger = logger
@@ -526,6 +532,12 @@ class RunWorkers:
             # these worker threads would never get anything to do.
             self.num_workers = min(self.num_workers, jobs)
 
+        self.cpu_gate = None
+        if cpu_target is not None:
+            from .cpu_load import CPUTimeSampler, CPUGate
+            self.cpu_gate = CPUGate(cpu_target, max(1, self.num_workers),
+                                    CPUTimeSampler())
+
     def start_workers(self) -> None:
         self.workers = [WorkerThread(index, self)
                         for index in range(1, self.num_workers + 1)]
@@ -542,6 +554,8 @@ class RunWorkers:
             msg += (" (timeout: %s, worker timeout: %s)"
                     % (format_duration(self.timeout),
                        format_duration(self.worker_timeout)))
+        if self.cpu_gate is not None:
+            msg += f' (CPU target: {self.cpu_gate.target:.0%}, adaptive workers)'
         self.log(msg)
         for worker in self.workers:
             worker.start()
@@ -549,6 +563,8 @@ class RunWorkers:
 
     def stop_workers(self) -> None:
         start_time = time.monotonic()
+        if self.cpu_gate is not None:
+            self.cpu_gate.stop()
         for worker in self.workers:
             worker.stop()
         for worker in self.workers:
@@ -560,14 +576,22 @@ class RunWorkers:
 
         # bpo-46205: check the status of workers every iteration to avoid
         # waiting forever on an empty queue.
+        next_progress = time.monotonic() + PROGRESS_UPDATE
         while self.live_worker_count > 0:
             if use_faulthandler:
                 faulthandler.dump_traceback_later(MAIN_PROCESS_TIMEOUT,
                                                   exit=True)
 
+            if self.cpu_gate is not None:
+                try:
+                    self.cpu_gate.update()
+                except (OSError, ValueError) as exc:
+                    return (True, f'CPU utilization sampling failed: {exc}')
+
             # wait for a thread
             try:
-                result = self.output.get(timeout=PROGRESS_UPDATE)
+                result = self.output.get(timeout=(1.0 if self.cpu_gate is not None
+                                                  else PROGRESS_UPDATE))
                 if isinstance(result, WorkerThreadExited):
                     self.live_worker_count -= 1
                     continue
@@ -575,7 +599,8 @@ class RunWorkers:
             except queue.Empty:
                 pass
 
-            if not pgo:
+            if not pgo and time.monotonic() >= next_progress:
+                next_progress = time.monotonic() + PROGRESS_UPDATE
                 # display progress
                 running = get_running(self.workers)
                 if running:
@@ -642,6 +667,8 @@ class RunWorkers:
         fail_fast = self.runtests.fail_fast
         fail_env_changed = self.runtests.fail_env_changed
         self.logger.get_mem_usage = self.get_mem_usage
+        if self.cpu_gate is not None:
+            self.logger.get_active_workers = self.cpu_gate.get_active_workers
 
         self.start_workers()
 
@@ -667,3 +694,4 @@ class RunWorkers:
             self.pending.stop()
             self.stop_workers()
             self.logger.get_mem_usage = None
+            self.logger.get_active_workers = None

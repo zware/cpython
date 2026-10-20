@@ -21,19 +21,24 @@ class Logger:
         self._quiet: bool = quiet
         self._pgo: bool = pgo
         self.get_mem_usage: Callable[[], int | None] | None = None
+        self.get_active_workers: Callable[[], int] | None = None
 
     def log(self, line: str = '') -> None:
         empty = not line
+
+        if self.get_active_workers is not None:
+            line = f'active workers: {self.get_active_workers()} {line}'
 
         # Add the memory usage: "mem: 1 GiB "
         if self.get_mem_usage is not None:
             mem = self.get_mem_usage()
             if mem:
-                mib = mem / (1024*1024)
-                if mib >= 1024:
-                    line = f"mem: {mib / 1024:.1f} GiB {line}"
-                else:
-                    line = f"mem: {mib:.1f} MiB {line}"
+                qty = mem / (1024*1024)
+                unit = 'MiB'
+                if qty >= 1024:
+                    unit = 'GiB'
+                    qty = qty / 1024
+                line = f"mem: {qty:5.1f} {unit} {line}"
 
         # Add the system load prefix: "load avg: 1.80 "
         load_avg = self.get_load_avg()

@@ -40,10 +40,14 @@ command line:
 EPILOG = """\
 Additional option details:
 
-`-jN%` adjusts concurrency to target N percent total CPU utilization on Linux,
-including other workloads on CPUs in the runner's affinity mask. It requires
-readable /proc/stat CPU counters. CPU quotas are not accounted for. Concurrency
-ranges from one worker to twice the automatic `-j0` worker count
+`-jN%` adjusts concurrency to target N percent total CPU utilization, including
+other workloads. On Linux it requires readable /proc/stat CPU counters and
+measures CPUs in the runner's affinity mask. On Windows it requires ctypes,
+a single processor group, and unrestricted process affinity, and measures
+system-wide CPU utilization. On macOS it requires ctypes and measures
+system-wide CPU utilization using Mach CPU counters. CPU quotas and Windows
+CPU sets are not accounted for. Concurrency ranges from one worker to twice
+the automatic `-j0` worker count
 (2 * (usable CPU count + 2)), bounded by the number of tests.
 Running tests are never suspended: this is an approximate target,
 not a hard limit or a guarantee of reaching the target. At least one worker
@@ -357,7 +361,7 @@ def _create_parser():
     group.add_argument('-j', '--multiprocess', metavar='PROCESSES',
                        dest='use_mp', type=worker_count,
                        help='run `PROCESSES` processes at once, or use a '
-                            'percentage CPU utilization target (Linux only).'
+                            'percentage CPU utilization target (Linux, Windows, or macOS).'
                             + more_details)
     group.add_argument('--single-process', action='store_true',
                        dest='single_process',

@@ -48,7 +48,7 @@ ROOT_DIR = os.path.abspath(os.path.normpath(ROOT_DIR))
 LOG_PREFIX = (
     r'[0-9]+:[0-9]+:[0-9]+ '
     r'(?:load avg: [0-9]+\.[0-9]{2} )?'
-    r'(?:mem: [0-9]+\.[0-9] (?:MiB|GiB) )?'
+    r'(?:mem: +[0-9]+\.[0-9] (?:MiB|GiB) )?'
     r'(?:active workers: [0-9]+ )?'
 )
 RESULT_REGEX = (
@@ -1105,7 +1105,7 @@ class ArgsTestCase(BaseTestCase):
         self.check_executed_tests(output, tests,
                                   stats=3 * len(tests))
 
-    @unittest.skipUnless(sys.platform == 'linux', 'requires Linux CPU counters')
+    @unittest.skipUnless(sys.platform in ('linux', 'win32', 'darwin'), 'requires CPU counters')
     def test_percentage_jobs(self):
         from test.libregrtest.cpu_load import CPUTimeSampler
         try:

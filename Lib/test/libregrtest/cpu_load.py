@@ -58,7 +58,15 @@ class CPUTimeSampler:
             delta = ticks - old_ticks
             idle_delta = idle_ticks - old_idle
             if delta < 0 or idle_delta < 0 or idle_delta > delta:
-                raise OSError('CPU counters moved backwards')
+                if self.windows_api is not None:
+                    # Discard inconsistent Windows intervals rather than
+                    # stopping the test run. Start the next interval from
+                    # this snapshot; CPUGate retains its current limit when
+                    # no utilization measurement is available.
+                    self.previous = current
+                    return None
+                raise OSError(f'inconsistent CPU counters: total delta={delta}, '
+                              f'idle delta={idle_delta}')
             total += delta
             idle += idle_delta
         self.previous = current

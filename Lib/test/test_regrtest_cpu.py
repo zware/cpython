@@ -267,6 +267,30 @@ class WindowsCPUTimeTests(unittest.TestCase):
             with self.assertRaisesRegex(OSError, 'requires ctypes'):
                 CPUTimeSampler()
 
+    def test_inconsistent_intervals(self):
+        for invalid in ((90, 20), (200, 10), (110, 40), (100, 21)):
+            with self.subTest(invalid=invalid):
+                recovered = (invalid[0] + 100, invalid[1] + 25)
+                with (patch('sys.platform', 'win32'),
+                      patch('test.libregrtest.cpu_load.WindowsCPUTimeAPI') as factory):
+                    factory.return_value.read.side_effect = [
+                        (100, 20), invalid, recovered]
+                    sampler = CPUTimeSampler()
+                    gate = CPUGate(0.8, 8, sampler)
+                    gate.limit = 2
+                    gate.next_sample = 0
+                    gate.update()
+                    self.assertEqual(gate.limit, 2)
+                    self.assertEqual(sampler.sample(), 0.75)
+
+    def test_api_error_is_not_discarded(self):
+        with (patch('sys.platform', 'win32'),
+              patch('test.libregrtest.cpu_load.WindowsCPUTimeAPI') as factory):
+            factory.return_value.read.side_effect = [(100, 20), OSError('access denied')]
+            sampler = CPUTimeSampler()
+            with self.assertRaisesRegex(OSError, 'access denied'):
+                sampler.sample()
+
     @unittest.skipUnless(sys.platform == 'win32', 'requires Windows')
     def test_native(self):
         try:
